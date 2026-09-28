@@ -3,6 +3,7 @@ name: Sightline Studionet Proof
 on:
   push:
     paths:
+      - "contracts/**"
       - "tests/integration/test_sightline_studionet.py"
       - ".github/workflows/studionet.yml"
   workflow_dispatch:
