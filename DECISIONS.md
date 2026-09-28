@@ -33,3 +33,9 @@ A challenge method that exists only as metadata does not protect settlement. Cha
 ## 2026-09-28 — Consensus guard tests include disagreement, not only happy paths
 
 Direct tests deliberately replace the leader's mocked visual judgment before executing the captured validator. Validators must return false when verdicts, scores, blockers, extracted facts, or aggregate quorum outcomes change. This checks the consensus boundary itself rather than only testing storage after a mocked successful answer.
+
+## 2026-09-28 — Raw uploads and live webpage screenshots use different hash semantics
+
+Caller-supplied image bytes are identical inputs for every validator, so their SHA-256 digest is a strict evidence identity and can be checked deterministically before consensus.
+
+Live webpage screenshots are different: each validator renders the HTTPS page independently. Pixel bytes may differ even when the visible meaning is equivalent. WebScreenshotAttestor and VisualMilestoneEscrow therefore record the leader snapshot SHA-256 for auditability but do not require validator screenshot hashes to match byte-for-byte. Consensus remains on the bounded visual verdict/score/confidence.
