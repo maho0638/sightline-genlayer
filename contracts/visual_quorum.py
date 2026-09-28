@@ -10,43 +10,104 @@ class QuorumResult:
     claim: str
     verdict: str
     support_count: u256
+    contradict_count: u256
     confidence: u256
 
 class VisualQuorum(gl.Contract):
+    """Three independent visual observations aggregated after per-image vision judgments."""
     results: TreeMap[str, QuorumResult]
 
-    def __init__(self): pass
+    def __init__(self):
+        pass
 
-    def _judge(self,images:list[bytes],claim:str)->dict:
-        def leader_fn()->dict:
-            out=gl.nondet.exec_prompt(f"""
-You receive three visual evidence items for this claim: {claim}
-Judge each image independently, then aggregate. Return JSON only:
-{{"verdict":"SUPPORTED"|"CONTRADICTED"|"UNDETERMINED","support_count":0|1|2|3,"confidence":0-100}}
-Do not count the same visible fact twice merely because wording repeats.
-""",images=images,response_format="json")
-            verdict=str(out.get("verdict","UNDETERMINED")).upper()
-            if verdict not in ("SUPPORTED","CONTRADICTED","UNDETERMINED"): verdict="UNDETERMINED"
-            return {"verdict":verdict,"support_count":max(0,min(3,int(out.get("support_count",0)))),"confidence":max(0,min(100,int(out.get("confidence",0))))}
-        def validator_fn(leader_result)->bool:
-            if not isinstance(leader_result,gl.vm.Return): return False
+    def _classify_one(self, image_data: bytes, claim: str) -> dict:
+        out = gl.nondet.exec_prompt(
+            f"""
+Judge this ONE visual evidence item against the claim below.
+CLAIM: {claim}
+Return JSON only:
+{{"verdict":"SUPPORTED"|"CONTRADICTED"|"UNDETERMINED","confidence":0-100}}
+Use only what is visibly established. Do not infer hidden facts.
+""",
+            images=[image_data],
+            response_format="json",
+        )
+        verdict = str(out.get("verdict", "UNDETERMINED")).upper()
+        if verdict not in ("SUPPORTED", "CONTRADICTED", "UNDETERMINED"):
+            verdict = "UNDETERMINED"
+        return {
+            "verdict": verdict,
+            "confidence": max(0, min(100, int(out.get("confidence", 0)))),
+        }
+
+    def _judge(self, image_a: bytes, image_b: bytes, image_c: bytes, claim: str) -> dict:
+        def leader_fn() -> dict:
+            a = self._classify_one(image_a, claim)
+            b = self._classify_one(image_b, claim)
+            c = self._classify_one(image_c, claim)
+            rows = [a, b, c]
+
+            support = sum(1 for row in rows if row["verdict"] == "SUPPORTED" and row["confidence"] >= 60)
+            contradict = sum(1 for row in rows if row["verdict"] == "CONTRADICTED" and row["confidence"] >= 60)
+            confidence = min(a["confidence"], b["confidence"], c["confidence"])
+
+            if support >= 2 and contradict == 0:
+                verdict = "SUPPORTED"
+            elif contradict >= 2 and support == 0:
+                verdict = "CONTRADICTED"
+            else:
+                verdict = "UNDETERMINED"
+
+            return {
+                "verdict": verdict,
+                "support_count": support,
+                "contradict_count": contradict,
+                "confidence": confidence,
+            }
+
+        def validator_fn(leader_result) -> bool:
+            if not isinstance(leader_result, gl.vm.Return):
+                return False
             try:
-                check=leader_fn(); lead=leader_result.calldata
-                return str(lead.get("verdict",""))==check["verdict"] and int(lead.get("support_count",-1))==check["support_count"] and abs(int(lead.get("confidence",0))-check["confidence"])<=15
-            except Exception:return False
-        return gl.vm.run_nondet_unsafe(leader_fn,validator_fn)
+                check = leader_fn()
+                lead = leader_result.calldata
+                return (
+                    str(lead.get("verdict", "")) == check["verdict"]
+                    and int(lead.get("support_count", -1)) == check["support_count"]
+                    and int(lead.get("contradict_count", -1)) == check["contradict_count"]
+                )
+            except Exception:
+                return False
+
+        return gl.vm.run_nondet_unsafe(leader_fn, validator_fn)
 
     @gl.public.write
-    def verify(self,result_id:str,claim:str,image_a:bytes,image_b:bytes,image_c:bytes)->None:
-        result_id=result_id.strip(); claim=claim.strip()
-        if not result_id or not claim: raise gl.vm.UserError("Missing ID or claim")
-        if result_id in self.results: raise gl.vm.UserError("Result already exists")
-        out=self._judge([image_a,image_b,image_c],claim)
-        verdict=str(out["verdict"]); support=int(out["support_count"]); confidence=int(out["confidence"])
-        if verdict!="UNDETERMINED" and (support<2 or confidence<65): verdict="UNDETERMINED"
-        self.results[result_id]=QuorumResult(result_id,claim[:1200],verdict,u256(support),u256(confidence))
+    def verify(
+        self,
+        result_id: str,
+        claim: str,
+        image_a: bytes,
+        image_b: bytes,
+        image_c: bytes,
+    ) -> None:
+        result_id = result_id.strip()
+        claim = claim.strip()
+        if not result_id or not claim:
+            raise gl.vm.UserError("Missing ID or claim")
+        if result_id in self.results:
+            raise gl.vm.UserError("Result already exists")
+        out = self._judge(image_a, image_b, image_c, claim)
+        self.results[result_id] = QuorumResult(
+            id=result_id,
+            claim=claim[:1200],
+            verdict=str(out["verdict"]),
+            support_count=u256(int(out["support_count"])),
+            contradict_count=u256(int(out["contradict_count"])),
+            confidence=u256(int(out["confidence"])),
+        )
 
     @gl.public.view
-    def get_result(self,result_id:str)->QuorumResult:
-        if result_id not in self.results: raise gl.vm.UserError("Result not found")
+    def get_result(self, result_id: str) -> QuorumResult:
+        if result_id not in self.results:
+            raise gl.vm.UserError("Result not found")
         return self.results[result_id]
