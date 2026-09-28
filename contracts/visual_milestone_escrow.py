@@ -105,8 +105,7 @@ Return JSON only:
                 check = leader_fn()
                 lead = leader_result.calldata
                 return (
-                    str(lead.get("proof_hash", "")) == check["proof_hash"]
-                    and str(lead.get("verdict", "")) == check["verdict"]
+                    str(lead.get("verdict", "")) == check["verdict"]
                     and abs(int(lead.get("score", 0)) - check["score"]) <= 10
                     and abs(int(lead.get("confidence", 0)) - check["confidence"]) <= 15
                 )

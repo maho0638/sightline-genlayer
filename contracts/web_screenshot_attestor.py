@@ -52,8 +52,7 @@ Return JSON only:
             try:
                 check = leader_fn(); lead = leader_result.calldata
                 return (
-                    str(lead.get("screenshot_hash", "")) == check["screenshot_hash"]
-                    and str(lead.get("verdict", "")) == check["verdict"]
+                    str(lead.get("verdict", "")) == check["verdict"]
                     and abs(int(lead.get("confidence", 0)) - check["confidence"]) <= 15
                 )
             except Exception:
