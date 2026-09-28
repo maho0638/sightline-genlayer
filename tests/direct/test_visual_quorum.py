@@ -1,4 +1,6 @@
+import hashlib
 import json
+
 
 def test_three_image_support_quorum(direct_vm, direct_deploy, direct_alice):
     c = direct_deploy("contracts/visual_quorum.py")
@@ -12,6 +14,10 @@ def test_three_image_support_quorum(direct_vm, direct_deploy, direct_alice):
     assert r.verdict == "SUPPORTED"
     assert r.support_count == 3
     assert r.contradict_count == 0
+    assert r.image_hash_a == hashlib.sha256(b"a").hexdigest()
+    assert r.image_hash_b == hashlib.sha256(b"b").hexdigest()
+    assert r.image_hash_c == hashlib.sha256(b"c").hexdigest()
+
 
 def test_three_image_contradiction_quorum(direct_vm, direct_deploy, direct_alice):
     c = direct_deploy("contracts/visual_quorum.py")
@@ -24,3 +30,10 @@ def test_three_image_contradiction_quorum(direct_vm, direct_deploy, direct_alice
     r = c.get_result("q2")
     assert r.verdict == "CONTRADICTED"
     assert r.contradict_count == 3
+
+
+def test_quorum_rejects_duplicate_images(direct_vm, direct_deploy, direct_alice):
+    c = direct_deploy("contracts/visual_quorum.py")
+    direct_vm.sender = direct_alice
+    with direct_vm.expect_revert("Visual quorum requires three distinct images"):
+        c.verify("q3", "A claim.", b"same", b"same", b"other")

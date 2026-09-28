@@ -1,54 +1,74 @@
 # { "Depends": "py-genlayer:1jb45aa8ynh2a9c9xn3b7qqh8sm5q93hwfp7jqmwsfhh8jpz09h6" }
 
+import hashlib
 from dataclasses import dataclass
 from genlayer import *
+
 
 @allow_storage
 @dataclass
 class QuorumResult:
     id: str
     claim: str
+    image_hash_a: str
+    image_hash_b: str
+    image_hash_c: str
     verdict: str
     support_count: u256
     contradict_count: u256
     confidence: u256
 
+
 class VisualQuorum(gl.Contract):
-    """Three independent visual observations aggregated after per-image vision judgments."""
+    """Three distinct visual observations aggregated with a deterministic 2-of-3 rule."""
     results: TreeMap[str, QuorumResult]
 
     def __init__(self):
         pass
 
-    def _classify_one(self, image_data: bytes, claim: str) -> dict:
-        out = gl.nondet.exec_prompt(
-            f"""
+    def _judge(
+        self,
+        image_a: bytes,
+        image_b: bytes,
+        image_c: bytes,
+        claim: str,
+    ) -> dict:
+        def classify_one(image_data: bytes) -> dict:
+            out = gl.nondet.exec_prompt(
+                f"""
 Judge this ONE visual evidence item against the claim below.
 CLAIM: {claim}
 Return JSON only:
 {{"verdict":"SUPPORTED"|"CONTRADICTED"|"UNDETERMINED","confidence":0-100}}
 Use only what is visibly established. Do not infer hidden facts.
 """,
-            images=[image_data],
-            response_format="json",
-        )
-        verdict = str(out.get("verdict", "UNDETERMINED")).upper()
-        if verdict not in ("SUPPORTED", "CONTRADICTED", "UNDETERMINED"):
-            verdict = "UNDETERMINED"
-        return {
-            "verdict": verdict,
-            "confidence": max(0, min(100, int(out.get("confidence", 0)))),
-        }
+                images=[image_data],
+                response_format="json",
+            )
+            verdict = str(out.get("verdict", "UNDETERMINED")).upper()
+            if verdict not in ("SUPPORTED", "CONTRADICTED", "UNDETERMINED"):
+                verdict = "UNDETERMINED"
+            return {
+                "verdict": verdict,
+                "confidence": max(0, min(100, int(out.get("confidence", 0)))),
+            }
 
-    def _judge(self, image_a: bytes, image_b: bytes, image_c: bytes, claim: str) -> dict:
         def leader_fn() -> dict:
-            a = self._classify_one(image_a, claim)
-            b = self._classify_one(image_b, claim)
-            c = self._classify_one(image_c, claim)
+            a = classify_one(image_a)
+            b = classify_one(image_b)
+            c = classify_one(image_c)
             rows = [a, b, c]
 
-            support = sum(1 for row in rows if row["verdict"] == "SUPPORTED" and row["confidence"] >= 60)
-            contradict = sum(1 for row in rows if row["verdict"] == "CONTRADICTED" and row["confidence"] >= 60)
+            support = sum(
+                1
+                for row in rows
+                if row["verdict"] == "SUPPORTED" and row["confidence"] >= 60
+            )
+            contradict = sum(
+                1
+                for row in rows
+                if row["verdict"] == "CONTRADICTED" and row["confidence"] >= 60
+            )
             confidence = min(a["confidence"], b["confidence"], c["confidence"])
 
             if support >= 2 and contradict == 0:
@@ -96,10 +116,24 @@ Use only what is visibly established. Do not infer hidden facts.
             raise gl.vm.UserError("Missing ID or claim")
         if result_id in self.results:
             raise gl.vm.UserError("Result already exists")
+        if not image_a or not image_b or not image_c:
+            raise gl.vm.UserError("Three non-empty images are required")
+
+        hashes = [
+            hashlib.sha256(image_a).hexdigest(),
+            hashlib.sha256(image_b).hexdigest(),
+            hashlib.sha256(image_c).hexdigest(),
+        ]
+        if len(set(hashes)) != 3:
+            raise gl.vm.UserError("Visual quorum requires three distinct images")
+
         out = self._judge(image_a, image_b, image_c, claim)
         self.results[result_id] = QuorumResult(
             id=result_id,
             claim=claim[:1200],
+            image_hash_a=hashes[0],
+            image_hash_b=hashes[1],
+            image_hash_c=hashes[2],
             verdict=str(out["verdict"]),
             support_count=u256(int(out["support_count"])),
             contradict_count=u256(int(out["contradict_count"])),
