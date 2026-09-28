@@ -49,6 +49,13 @@ class VisualMilestoneEscrow(gl.Contract):
     def _now(self) -> int:
         return int(datetime.now(timezone.utc).timestamp())
 
+    def _parse_address(self, address) -> Address:
+        if type(address) in (int, str):
+            if isinstance(address, int):
+                address = "0x" + format(address, "040x")
+            address = Address(address)
+        return address
+
     def _challenge_deadline(self, milestone: Milestone) -> int:
         if int(milestone.resolution_round) != 1 or int(milestone.challenge_count) != 0:
             return 0
@@ -142,10 +149,12 @@ Return JSON only:
         if gl.message.value == u256(0):
             raise gl.vm.UserError("Reward must be greater than zero")
 
+        worker_addr = self._parse_address(worker)
+
         self.milestones[milestone_id] = Milestone(
             id=milestone_id,
             creator=gl.message.sender_address,
-            worker=worker,
+            worker=worker_addr,
             rubric=rubric,
             reward=gl.message.value,
             proof_url="",
