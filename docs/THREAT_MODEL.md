@@ -8,7 +8,7 @@ Sightline treats visual AI output as an untrusted nondeterministic observation. 
 | --- | --- |
 | Prompt injection inside an image/webpage | Prompts explicitly treat visible text as evidence only and constrain the task/output. |
 | Hallucinated certainty | Every classification has an explicit UNDETERMINED/ABSTAIN path; low confidence fails closed. |
-| Evidence swapping after a decision | Raw-image primitives persist SHA-256 digests of the exact evaluated bytes. |
+| Evidence swapping after a decision | Caller-supplied raw-image primitives persist SHA-256 digests of the exact evaluated bytes. Live webpage primitives record the leader-rendered screenshot digest as an audit snapshot. |
 | Duplicate images faking quorum | VisualQuorum rejects repeated SHA-256 digests before consensus. |
 | One weak image counted multiple times | Three images are classified independently; deterministic aggregation requires 2-of-3 support with no contradictory vote for a positive result. |
 | Model says PASS with a weak score | VisualRubricGate deterministically converts PASS below the score floor to FAIL. |
@@ -24,4 +24,4 @@ Sightline treats visual AI output as an untrusted nondeterministic observation. 
 
 Sightline does not prove that a photo is recent, geolocated, camera-authentic, or free of image editing. Those properties require trusted capture/attestation infrastructure outside the present contracts. Sightline only reaches consensus over what supplied visual evidence visibly establishes.
 
-The contracts also do not claim infallible OCR. DocumentFieldAttestor intentionally verifies one named field at a time and can return UNDETERMINED instead of inventing missing content.
+Because validators render live webpages independently, Sightline does not require screenshot pixels to hash identically across validators; semantic consensus is the security boundary for web-rendered evidence.\n\nThe contracts also do not claim infallible OCR. DocumentFieldAttestor intentionally verifies one named field at a time and can return UNDETERMINED instead of inventing missing content.
