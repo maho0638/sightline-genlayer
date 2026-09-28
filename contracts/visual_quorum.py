@@ -33,43 +33,62 @@ class VisualQuorum(gl.Contract):
         image_c: bytes,
         claim: str,
     ) -> dict:
-        def classify_one(image_data: bytes) -> dict:
-            out = gl.nondet.exec_prompt(
-                f"""
+        def leader_fn() -> dict:
+            prompt = f"""
 Judge this ONE visual evidence item against the claim below.
 CLAIM: {claim}
 Return JSON only:
 {{"verdict":"SUPPORTED"|"CONTRADICTED"|"UNDETERMINED","confidence":0-100}}
 Use only what is visibly established. Do not infer hidden facts.
-""",
-                images=[image_data],
+"""
+            raw_a = gl.nondet.exec_prompt(
+                prompt,
+                images=[image_a],
                 response_format="json",
             )
-            verdict = str(out.get("verdict", "UNDETERMINED")).upper()
-            if verdict not in ("SUPPORTED", "CONTRADICTED", "UNDETERMINED"):
-                verdict = "UNDETERMINED"
-            return {
-                "verdict": verdict,
-                "confidence": max(0, min(100, int(out.get("confidence", 0)))),
-            }
-
-        def leader_fn() -> dict:
-            a = classify_one(image_a)
-            b = classify_one(image_b)
-            c = classify_one(image_c)
-            rows = [a, b, c]
-
-            support = sum(
-                1
-                for row in rows
-                if row["verdict"] == "SUPPORTED" and row["confidence"] >= 60
+            raw_b = gl.nondet.exec_prompt(
+                prompt,
+                images=[image_b],
+                response_format="json",
             )
-            contradict = sum(
-                1
-                for row in rows
-                if row["verdict"] == "CONTRADICTED" and row["confidence"] >= 60
+            raw_c = gl.nondet.exec_prompt(
+                prompt,
+                images=[image_c],
+                response_format="json",
             )
-            confidence = min(a["confidence"], b["confidence"], c["confidence"])
+
+            verdict_a = str(raw_a.get("verdict", "UNDETERMINED")).upper()
+            verdict_b = str(raw_b.get("verdict", "UNDETERMINED")).upper()
+            verdict_c = str(raw_c.get("verdict", "UNDETERMINED")).upper()
+
+            allowed = ("SUPPORTED", "CONTRADICTED", "UNDETERMINED")
+            if verdict_a not in allowed:
+                verdict_a = "UNDETERMINED"
+            if verdict_b not in allowed:
+                verdict_b = "UNDETERMINED"
+            if verdict_c not in allowed:
+                verdict_c = "UNDETERMINED"
+
+            conf_a = max(0, min(100, int(raw_a.get("confidence", 0))))
+            conf_b = max(0, min(100, int(raw_b.get("confidence", 0))))
+            conf_c = max(0, min(100, int(raw_c.get("confidence", 0))))
+
+            support = 0
+            contradict = 0
+            if verdict_a == "SUPPORTED" and conf_a >= 60:
+                support += 1
+            elif verdict_a == "CONTRADICTED" and conf_a >= 60:
+                contradict += 1
+            if verdict_b == "SUPPORTED" and conf_b >= 60:
+                support += 1
+            elif verdict_b == "CONTRADICTED" and conf_b >= 60:
+                contradict += 1
+            if verdict_c == "SUPPORTED" and conf_c >= 60:
+                support += 1
+            elif verdict_c == "CONTRADICTED" and conf_c >= 60:
+                contradict += 1
+
+            confidence = min(conf_a, conf_b, conf_c)
 
             if support >= 2 and contradict == 0:
                 verdict = "SUPPORTED"
