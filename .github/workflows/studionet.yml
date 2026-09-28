@@ -4,19 +4,24 @@ on:
   push:
     paths:
       - "contracts/**"
-      - "tests/integration/test_sightline_studionet.py"
+      - "tests/integration/**"
+      - "requirements.txt"
       - ".github/workflows/studionet.yml"
   workflow_dispatch:
 
 jobs:
   live-proof:
     runs-on: ubuntu-latest
-    timeout-minutes: 90
+    timeout-minutes: 120
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
       - run: pip install -r requirements.txt
-      - name: Run canonical Sightline live proof
+      - name: Pin contract source hashes
+        run: sha256sum contracts/*.py
+      - name: Run core lifecycle proofs
         run: gltest tests/integration/test_sightline_studionet.py -v -s --network studionet
+      - name: Run expanded catalog proofs
+        run: gltest tests/integration/test_sightline_catalog_studionet.py -v -s --network studionet
