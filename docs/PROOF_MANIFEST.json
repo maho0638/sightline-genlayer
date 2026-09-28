@@ -1,0 +1,14 @@
+{
+  "schema": "sightline-proof-v1",
+  "status": "DEVELOPMENT_ONLY",
+  "direct_tests": null,
+  "lint": null,
+  "canonical_ci_run": null,
+  "studionet": {
+    "visual_rubric_gate": null,
+    "web_screenshot_attestor": null,
+    "visual_milestone_escrow": null,
+    "challengeable_visual_claim": null
+  },
+  "submission_ready": false
+}
