@@ -1,5 +1,6 @@
 # { "Depends": "py-genlayer:1jb45aa8ynh2a9c9xn3b7qqh8sm5q93hwfp7jqmwsfhh8jpz09h6" }
 
+import hashlib
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from genlayer import *
@@ -27,6 +28,7 @@ class Milestone:
     rubric: str
     reward: u256
     proof_url: str
+    proof_hash: str
     status: str
     score: u256
     confidence: u256
@@ -72,6 +74,7 @@ class VisualMilestoneEscrow(gl.Contract):
     def _judge(self, proof_url: str, rubric: str) -> dict:
         def leader_fn() -> dict:
             screenshot = gl.nondet.web.render(proof_url, mode="screenshot")
+            proof_hash = hashlib.sha256(screenshot.raw).hexdigest()
             out = gl.nondet.exec_prompt(
                 f"""
 Judge this visual milestone proof against the frozen rubric below.
@@ -88,6 +91,7 @@ Return JSON only:
             if verdict not in ("PASS", "FAIL", "UNDETERMINED"):
                 verdict = "UNDETERMINED"
             return {
+                "proof_hash": proof_hash,
                 "verdict": verdict,
                 "score": max(0, min(100, int(out.get("score", 0)))),
                 "confidence": max(0, min(100, int(out.get("confidence", 0)))),
@@ -101,7 +105,8 @@ Return JSON only:
                 check = leader_fn()
                 lead = leader_result.calldata
                 return (
-                    str(lead.get("verdict", "")) == check["verdict"]
+                    str(lead.get("proof_hash", "")) == check["proof_hash"]
+                    and str(lead.get("verdict", "")) == check["verdict"]
                     and abs(int(lead.get("score", 0)) - check["score"]) <= 10
                     and abs(int(lead.get("confidence", 0)) - check["confidence"]) <= 15
                 )
@@ -125,6 +130,7 @@ Return JSON only:
         else:
             milestone.status = "UNDETERMINED"
 
+        milestone.proof_hash = str(out["proof_hash"])
         milestone.score = u256(score)
         milestone.confidence = u256(confidence)
         milestone.reason = str(out["reason"])
@@ -158,6 +164,7 @@ Return JSON only:
             rubric=rubric,
             reward=gl.message.value,
             proof_url="",
+            proof_hash="",
             status="OPEN",
             score=u256(0),
             confidence=u256(0),

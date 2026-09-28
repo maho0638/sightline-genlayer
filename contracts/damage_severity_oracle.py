@@ -1,5 +1,6 @@
 # { "Depends": "py-genlayer:1jb45aa8ynh2a9c9xn3b7qqh8sm5q93hwfp7jqmwsfhh8jpz09h6" }
 
+import hashlib
 from dataclasses import dataclass
 from genlayer import *
 
@@ -8,6 +9,7 @@ from genlayer import *
 class DamageResult:
     id: str
     evidence_ref: str
+    evidence_hash: str
     severity: str
     confidence: u256
     summary: str
@@ -57,11 +59,21 @@ Use UNDETERMINED if the image is unclear or insufficient.
             raise gl.vm.UserError("Missing ID or subject")
         if result_id in self.results:
             raise gl.vm.UserError("Result already exists")
+        if not image_data:
+            raise gl.vm.UserError("Image data is empty")
+        evidence_hash = hashlib.sha256(image_data).hexdigest()
         out = self._judge(image_data, subject)
         severity = str(out["severity"]); confidence = int(out["confidence"])
         if confidence < 60:
             severity = "UNDETERMINED"
-        self.results[result_id] = DamageResult(result_id, evidence_ref.strip()[:240], severity, u256(confidence), str(out["summary"]))
+        self.results[result_id] = DamageResult(
+            id=result_id,
+            evidence_ref=evidence_ref.strip()[:240],
+            evidence_hash=evidence_hash,
+            severity=severity,
+            confidence=u256(confidence),
+            summary=str(out["summary"]),
+        )
 
     @gl.public.view
     def get_result(self, result_id: str) -> DamageResult:

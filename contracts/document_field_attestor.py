@@ -1,5 +1,6 @@
 # { "Depends": "py-genlayer:1jb45aa8ynh2a9c9xn3b7qqh8sm5q93hwfp7jqmwsfhh8jpz09h6" }
 
+import hashlib
 from dataclasses import dataclass
 from genlayer import *
 
@@ -9,6 +10,7 @@ class FieldResult:
     id: str
     field_name: str
     expected_value: str
+    evidence_hash: str
     observed_value: str
     verdict: str
     confidence: u256
@@ -75,6 +77,9 @@ Use UNDETERMINED if the field is unreadable or ambiguous.
             raise gl.vm.UserError("Missing ID, field name, or expected value")
         if result_id in self.results:
             raise gl.vm.UserError("Result already exists")
+        if not image_data:
+            raise gl.vm.UserError("Image data is empty")
+        evidence_hash = hashlib.sha256(image_data).hexdigest()
         out = self._judge(image_data, field_name, expected_value)
         verdict = str(out["verdict"])
         confidence = int(out["confidence"])
@@ -84,6 +89,7 @@ Use UNDETERMINED if the field is unreadable or ambiguous.
             id=result_id,
             field_name=field_name[:180],
             expected_value=expected_value[:240],
+            evidence_hash=evidence_hash,
             observed_value=str(out["observed_value"]),
             verdict=verdict,
             confidence=u256(confidence),

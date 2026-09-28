@@ -1,5 +1,6 @@
 # { "Depends": "py-genlayer:1jb45aa8ynh2a9c9xn3b7qqh8sm5q93hwfp7jqmwsfhh8jpz09h6" }
 
+import hashlib
 from dataclasses import dataclass
 from genlayer import *
 
@@ -9,6 +10,7 @@ class DecisionReceipt:
     id: str
     question: str
     evidence_ref: str
+    evidence_hash: str
     decision: str
     confidence: u256
     rationale: str
@@ -72,6 +74,9 @@ Use ABSTAIN if the image does not clearly establish YES or NO.
             raise gl.vm.UserError("Missing ID, question, or evidence reference")
         if receipt_id in self.receipts:
             raise gl.vm.UserError("Receipt already exists")
+        if not image_data:
+            raise gl.vm.UserError("Image data is empty")
+        evidence_hash = hashlib.sha256(image_data).hexdigest()
         out = self._judge(image_data, question)
         decision = str(out["decision"])
         confidence = int(out["confidence"])
@@ -81,6 +86,7 @@ Use ABSTAIN if the image does not clearly establish YES or NO.
             id=receipt_id,
             question=question[:1200],
             evidence_ref=evidence_ref[:240],
+            evidence_hash=evidence_hash,
             decision=decision,
             confidence=u256(confidence),
             rationale=str(out["rationale"]),

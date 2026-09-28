@@ -1,5 +1,6 @@
 # { "Depends": "py-genlayer:1jb45aa8ynh2a9c9xn3b7qqh8sm5q93hwfp7jqmwsfhh8jpz09h6" }
 
+import hashlib
 from dataclasses import dataclass
 from genlayer import *
 
@@ -8,6 +9,7 @@ from genlayer import *
 class ChartResult:
     id: str
     claim: str
+    evidence_hash: str
     verdict: str
     confidence: u256
     extracted_fact: str
@@ -70,6 +72,9 @@ Use UNDETERMINED when the chart is unreadable, the units are unclear, or the cla
             raise gl.vm.UserError("Claim too long")
         if result_id in self.results:
             raise gl.vm.UserError("Result already exists")
+        if not image_data:
+            raise gl.vm.UserError("Image data is empty")
+        evidence_hash = hashlib.sha256(image_data).hexdigest()
         out = self._judge(image_data, claim)
         verdict = str(out["verdict"])
         confidence = int(out["confidence"])
@@ -78,6 +83,7 @@ Use UNDETERMINED when the chart is unreadable, the units are unclear, or the cla
         self.results[result_id] = ChartResult(
             id=result_id,
             claim=claim,
+            evidence_hash=evidence_hash,
             verdict=verdict,
             confidence=u256(confidence),
             extracted_fact=str(out["extracted_fact"]),

@@ -1,5 +1,6 @@
 # { "Depends": "py-genlayer:1jb45aa8ynh2a9c9xn3b7qqh8sm5q93hwfp7jqmwsfhh8jpz09h6" }
 
+import hashlib
 from dataclasses import dataclass
 from genlayer import *
 
@@ -8,6 +9,7 @@ from genlayer import *
 class UIStateResult:
     id: str
     target_state: str
+    evidence_hash: str
     verdict: str
     visible: bool
     blocked: bool
@@ -66,6 +68,9 @@ blocked=true when an error, modal, loading state, access gate, or contradictory 
             raise gl.vm.UserError("Missing ID or target state")
         if result_id in self.results:
             raise gl.vm.UserError("Result already exists")
+        if not image_data:
+            raise gl.vm.UserError("Image data is empty")
+        evidence_hash = hashlib.sha256(image_data).hexdigest()
         out = self._judge(image_data, target_state)
         confidence = int(out["confidence"])
         if confidence < 65:
@@ -79,6 +84,7 @@ blocked=true when an error, modal, loading state, access gate, or contradictory 
         self.results[result_id] = UIStateResult(
             id=result_id,
             target_state=target_state[:1000],
+            evidence_hash=evidence_hash,
             verdict=verdict,
             visible=bool(out["visible"]),
             blocked=bool(out["blocked"]),

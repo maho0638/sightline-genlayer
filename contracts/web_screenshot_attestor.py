@@ -1,5 +1,6 @@
 # { "Depends": "py-genlayer:1jb45aa8ynh2a9c9xn3b7qqh8sm5q93hwfp7jqmwsfhh8jpz09h6" }
 
+import hashlib
 from dataclasses import dataclass
 from genlayer import *
 
@@ -9,6 +10,7 @@ class ScreenshotResult:
     id: str
     url: str
     criterion: str
+    screenshot_hash: str
     verdict: str
     confidence: u256
     note: str
@@ -22,6 +24,7 @@ class WebScreenshotAttestor(gl.Contract):
     def _judge(self, url: str, criterion: str) -> dict:
         def leader_fn() -> dict:
             screenshot = gl.nondet.web.render(url, mode="screenshot")
+            screenshot_hash = hashlib.sha256(screenshot.raw).hexdigest()
             out = gl.nondet.exec_prompt(
                 f"""
 Inspect the screenshot of {url}.
@@ -37,6 +40,7 @@ Return JSON only:
             if verdict not in ("PASS", "FAIL", "UNDETERMINED"):
                 verdict = "UNDETERMINED"
             return {
+                "screenshot_hash": screenshot_hash,
                 "verdict": verdict,
                 "confidence": max(0, min(100, int(out.get("confidence", 0)))),
                 "note": str(out.get("note", ""))[:220],
@@ -47,7 +51,11 @@ Return JSON only:
                 return False
             try:
                 check = leader_fn(); lead = leader_result.calldata
-                return str(lead.get("verdict", "")) == check["verdict"] and abs(int(lead.get("confidence", 0)) - check["confidence"]) <= 15
+                return (
+                    str(lead.get("screenshot_hash", "")) == check["screenshot_hash"]
+                    and str(lead.get("verdict", "")) == check["verdict"]
+                    and abs(int(lead.get("confidence", 0)) - check["confidence"]) <= 15
+                )
             except Exception:
                 return False
 
@@ -66,7 +74,15 @@ Return JSON only:
         verdict = str(out["verdict"]); confidence = int(out["confidence"])
         if confidence < 65:
             verdict = "UNDETERMINED"
-        self.results[result_id] = ScreenshotResult(result_id, url[:500], criterion[:1200], verdict, u256(confidence), str(out["note"]))
+        self.results[result_id] = ScreenshotResult(
+            id=result_id,
+            url=url[:500],
+            criterion=criterion[:1200],
+            screenshot_hash=str(out["screenshot_hash"]),
+            verdict=verdict,
+            confidence=u256(confidence),
+            note=str(out["note"]),
+        )
 
     @gl.public.view
     def get_result(self, result_id: str) -> ScreenshotResult:
