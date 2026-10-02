@@ -22,6 +22,15 @@ class ChartClaimVerifier(gl.Contract):
     def __init__(self):
         pass
 
+    def _final_verdict(self, verdict: str, confidence: int) -> str:
+        verdict = str(verdict).upper()
+        if verdict not in ("SUPPORTED", "CONTRADICTED", "UNDETERMINED"):
+            verdict = "UNDETERMINED"
+        confidence = max(0, min(100, int(confidence)))
+        if confidence < 65:
+            return "UNDETERMINED"
+        return verdict
+
     def _judge(self, image_data: bytes, claim: str) -> dict:
         def leader_fn() -> dict:
             out = gl.nondet.exec_prompt(
@@ -52,10 +61,11 @@ Use UNDETERMINED when the chart is unreadable, the units are unclear, or the cla
             try:
                 check = leader_fn()
                 lead = leader_result.calldata
+                lead_confidence = max(0, min(100, int(lead.get("confidence", 0))))
                 return (
-                    str(lead.get("verdict", "")) == check["verdict"]
-                    and str(lead.get("extracted_fact", "")) == check["extracted_fact"]
-                    and abs(int(lead.get("confidence", 0)) - check["confidence"]) <= 15
+                    self._final_verdict(str(lead.get("verdict", "")), lead_confidence)
+                    == self._final_verdict(check["verdict"], check["confidence"])
+                    and abs(lead_confidence - check["confidence"]) <= 15
                 )
             except Exception:
                 return False
@@ -76,10 +86,8 @@ Use UNDETERMINED when the chart is unreadable, the units are unclear, or the cla
             raise gl.vm.UserError("Image data is empty")
         evidence_hash = hashlib.sha256(image_data).hexdigest()
         out = self._judge(image_data, claim)
-        verdict = str(out["verdict"])
         confidence = int(out["confidence"])
-        if confidence < 65:
-            verdict = "UNDETERMINED"
+        verdict = self._final_verdict(str(out["verdict"]), confidence)
         self.results[result_id] = ChartResult(
             id=result_id,
             claim=claim,
