@@ -13,7 +13,7 @@ Sightline treats visual AI output as an untrusted nondeterministic observation. 
 | One weak image counted multiple times | Three images are classified independently; deterministic aggregation requires 2-of-3 support with no contradictory vote for a positive result. |
 | Model says PASS with a weak score | VisualRubricGate deterministically converts PASS below the score floor to FAIL. |
 | UI success hidden by an error/modal | UIStateAttestor gives a blocker flag deterministic priority over visible=true. |
-| Validator/model disagreement | Validators independently re-run decisive judgments; adversarial direct tests prove changed results are rejected. |
+| Validator/model disagreement | Validators independently re-run decisive judgments; adversarial direct tests prove changed results are rejected. VisualMilestoneEscrow additionally derives the final thresholded settlement status inside validation, so accepted numeric drift cannot change claim/refund eligibility. |
 | Immediate settlement defeating appeal rights | ChallengeableVisualClaim and VisualMilestoneEscrow enforce a one-hour initial challenge window. |
 | Reusing the same challenge evidence | ChallengeableVisualClaim requires a different SHA-256 evidence digest. |
 | Double settlement | Escrow stores terminal settlement state and rejects a second claim/refund. |
