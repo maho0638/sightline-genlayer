@@ -31,7 +31,7 @@ Traditional smart contracts cannot inspect a receipt photo, compare before/after
 - decisive outputs are reduced to bounded fields;
 - validators independently re-run decisive vision judgments;
 - low-confidence or malformed results fail closed to `UNDETERMINED` / `ABSTAIN`;
-- deterministic score/confidence thresholds are applied after consensus;
+- validators compare the final thresholded settlement status inside consensus, so tolerated score/confidence drift cannot cross an economic decision boundary;
 - duplicate result IDs are rejected;
 - VisualQuorum rejects duplicate evidence hashes and aggregates three independent classifications;
 - UI blocker state deterministically overrides visible success;
@@ -45,7 +45,7 @@ See `docs/THREAT_MODEL.md` for explicit limitations.
 
 Sightline is live-verified on Studionet:
 
-- 55 direct tests PASS;
+- 58 direct tests PASS;
 - 12 / 12 contracts pass GenVM lint;
 - canonical CI run: https://github.com/maho0638/sightline-genlayer/actions/runs/36456868314
 - canonical full Studionet run: https://github.com/maho0638/sightline-genlayer/actions/runs/36456231411
