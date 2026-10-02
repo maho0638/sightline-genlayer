@@ -23,7 +23,7 @@ The direct suite covers:
 - duplicate-ID state invariants;
 - exact SHA-256 binding for caller-supplied visual evidence;
 - challenge-window and distinct-evidence rules;
-- adversarial validator disagreement, including escrow score/confidence pairs that remain within numeric tolerance but cross the final settlement threshold.
+- adversarial validator disagreement, including score/confidence pairs that remain within numeric tolerance but would cross a final stored or settlement threshold.
 
 ## Reproduce live Studionet proofs
 
@@ -42,7 +42,7 @@ The second suite deploys and exercises the remaining visual primitives with dete
 
 ## What is consensus-backed
 
-Sightline never treats an LLM call as trusted state by itself. Each semantic output is produced inside a nondeterministic block and independently re-evaluated by the validator function. The accepted result is then normalized through deterministic state rules such as confidence floors, score floors, blocker precedence, 2-of-3 quorum, one-shot challenge limits, and settlement locks.
+Sightline never treats an LLM call as trusted state by itself. Each semantic output is produced inside a nondeterministic block and independently re-evaluated by the validator function. The accepted result is normalized through deterministic state rules such as confidence floors, score floors, blocker precedence, 2-of-3 quorum, one-shot challenge limits, and settlement locks. For thresholded primitives, validators compare that same final normalized outcome during consensus.
 
 ## Evidence identity
 

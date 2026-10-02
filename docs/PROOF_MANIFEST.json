@@ -7,7 +7,7 @@
     "network": "Studionet"
   },
   "direct_tests": {
-    "count": 55,
+    "count": 67,
     "status": "PASS",
     "command": "pytest tests/direct -v"
   },
@@ -18,39 +18,39 @@
     "command": "for f in contracts/*.py; do genvm-lint check \"$f\"; done"
   },
   "canonical_ci_run": {
-    "run_id": 36456868314,
-    "url": "https://github.com/maho0638/sightline-genlayer/actions/runs/36456868314",
+    "run_id": 37062146230,
+    "url": "https://github.com/maho0638/sightline-genlayer/actions/runs/37062146230",
     "status": "SUCCESS"
   },
   "studionet": {
     "canonical_run": {
-      "run_id": 36456231411,
-      "url": "https://github.com/maho0638/sightline-genlayer/actions/runs/36456231411",
-      "commit": "c5c89b43d27be0fd5393a4a099e09608d05d04fb",
+      "run_id": 37062146333,
+      "url": "https://github.com/maho0638/sightline-genlayer/actions/runs/37062146333",
+      "commit": "160992edf63803a49e14e6642f94329aa4e9e016",
       "status": "SUCCESS",
       "core_suite": "4/4 PASS",
       "expanded_catalog": "8/8 PASS",
       "total": "12/12 live deploy + transact + read/assertion PASS"
     },
     "source_hashes_sha256": {
-      "before_after_verifier": "fdc6a74b155122058c11662671c5c9601320079f581c80ea3b1743a037714309",
-      "challengeable_visual_claim": "87bf91d90e35505b7867f0128cddffe34e19452105f5c176f0a1af2fd188edf1",
-      "chart_claim_verifier": "76b1f2423b4e026173c0f677d93234782f132ae2b4bf2dda6ff849309b285dcb",
-      "damage_severity_oracle": "50252b3f9bd68032a6246a98c43359c18605e3760716e49dd13dfac75fd82144",
-      "document_field_attestor": "5f767d59bf3c8c5bb8127f028f8df59d07fcf6f639d8d464ec7c461a5ce2c496",
-      "receipt_attestor": "c3e873302211f55c3e5a3448856cd59103279b3a4f2d6b944c2ff1b129262c8b",
-      "ui_state_attestor": "34af65f74885c25060196f4a6652b065a4b2366e7d8fcefdad6b1c10d73a93d7",
-      "visual_decision_receipt": "3358705659850024ead36e89aa437c19430417419a2842bc2c7d6a44de20d0d1",
-      "visual_milestone_escrow": "42d3d38eb60f0f5a297d7b65ad5f24daadd5a44f3c3567a70982c9932bc50af3",
+      "before_after_verifier": "57a69062ff4e3a3aa7a9340555c1d81a59a5ffbdf428f742551667df200c60c9",
+      "challengeable_visual_claim": "303082c9af1811de01d928d8d2b573e45c7650c2127aaedc69fcb2d187fcbd45",
+      "chart_claim_verifier": "6058b40bdf73f3b2fa0a3c13159fef7ff3db5f217cf07220caa83cfe2a6dd4c5",
+      "damage_severity_oracle": "6acaf0ab4caf3e37eed417ed8ddff0260c201d1035be165b243e19fb05dda634",
+      "document_field_attestor": "6dba3b9ee72b3710848c8d47f1d8919be37ddfb3719cd0ef15dd743f93734f1e",
+      "receipt_attestor": "e3859586aeb2f16272cbec92610578b670bc0bb0c3cbd61e619fba7c4677faeb",
+      "ui_state_attestor": "ee3a679313aa357100d976160a05a9b158065700706711e2e7faf2056167193e",
+      "visual_decision_receipt": "a2927cda687a0594d9f3f8dadf60fd72ecec200d2f643ddefb94bf0b99072d38",
+      "visual_milestone_escrow": "160148d43dbcf309629e0bd25b2abeee164f48b33205237a5012cc709f81e3e4",
       "visual_quorum": "cbc0ae113f42c60af8699ed438a3682d06d5b67a1127da725a8ef46984c28c04",
-      "visual_rubric_gate": "66bfa72fe098f6d49c92a8dc8c168eceb37b6f024a6c2960e03bd70e9c685579",
-      "web_screenshot_attestor": "11c42aa7f750c31f356a24411ad80dd98dbfa84f08b0364a8a2c0dfd0716c663"
+      "visual_rubric_gate": "ad06ee7b2bdac81d419deef8de93ff0a8114614d981fe82c87ed49208bc11b56",
+      "web_screenshot_attestor": "4250fa8f65b918004a6c91b2f130a34bb70bced6c231618b8574bc8098c6c1da"
     },
     "contracts": {
       "visual_rubric_gate": {
-        "address": "0xDd1b5df22440F5AAbB51504D561b2057340A9e09",
+        "address": "0xA53235ABE760B8848040c83DaCE7f587f9c1A9cC",
         "transactions": {
-          "attest": "0x1ffe37938513a592d95ea4255c406bcbfc76add005ebaff6cc83874697bc068b"
+          "attest": "0x32260f1582ebc55a891dec3b076ff5937affa94b6cb2c821103654e768160803"
         },
         "result": {
           "verdict": "PASS",
@@ -60,45 +60,44 @@
         "evidence_hash": "6f7ffeeb88929a8a2e34ea973c871f069be70cbaf1459fff345db59453934435"
       },
       "web_screenshot_attestor": {
-        "address": "0xB4DD6920B3bD533b195DB63880648021091b3CfA",
+        "address": "0x4120A1D3fCA4320e9a63AC2E50A0880cdbBd5502",
         "transactions": {
-          "attest": "0xe584bd8fa1fdea8d6efdc438234897de680c7a2b3515f16e7c46f1b677ca1686"
+          "attest": "0xb166ba2b39476b151180b9204daef635dc054c277c304379c8a1faacdc3ca313"
         },
         "result": {
           "verdict": "FAIL",
-          "confidence": 99,
-          "criterion": "example.com contains a full-screen bright red SYSTEM DOWN banner",
+          "confidence": 100,
           "expected_negative_case": true
         }
       },
       "challengeable_visual_claim": {
-        "address": "0xaAE949D81db1949CBA02fE0d4E8F78910cad963c",
+        "address": "0xeA3C0510eB26be8c8CF1a0c43Ffbf758C9A89879",
         "transactions": {
-          "open": "0xc25290bd91a7ab5f8e9eeeb803b1835775cad2170a6d91f6672307b0539c618f",
-          "challenge": "0x1e1afac69d5fd7a5c1655e18ef9607c5231d623521d5243083784213fa719664",
-          "finalize": "0x02a9e1e448242c9f9ad67d56d10017d2d7301a8d6d3c8d8c7bd3cc7e5b8959ea"
+          "open": "0xbc561024c37d091a24a8898e02d79cf0c206ea41b1b39f886180c3ef5cb709ac",
+          "challenge": "0x7d360d7727c030804fe38e5de34188510d6e0d2a6465c279a75d1e066ebaa796",
+          "finalize": "0xddc0707dc04ccb1b440522f8630083459743b98004bde874bffc4a05fbe74747"
         },
         "initial_verdict": "SUPPORTED",
         "challenge_verdict": "CONTRADICTED",
-        "challenge_deadline": 1790619121,
+        "challenge_deadline": 1790977365,
         "initial_evidence_hash": "6f7ffeeb88929a8a2e34ea973c871f069be70cbaf1459fff345db59453934435",
         "challenge_evidence_hash": "1bcc2e9e4b2f3c470bacddc8e9b05a7853f55436dc985a5f562ac2f5ed4731d7"
       },
       "visual_milestone_escrow": {
-        "address": "0x14d8Ab5a702DD46540793B56209DFA3293fF234A",
-        "worker": "0xc061E89C2671487137B5fb862ab350581Fa4De0a",
+        "address": "0x48613166Cd5d816A749888ad39980FaC2853E574",
+        "worker": "0xFFfCD3aB5c9e463AdDdbd1de2EFC364B9312402e",
         "transactions": {
-          "create": "0x99c32b2de3caf18507bacb4669b3372710801fd4bc13d21d2441a607c10cf940",
-          "submit_proof": "0x9262060d06da5a3b860978d0d13b6aade71372390fe4fe20cf89a658bc00f505",
-          "resolve": "0xe08b8f49991ae8dee524dd4610f6611a06c2941279dc1aa2398bb65daf1098ed",
-          "challenge": "0x3434f1ca348f71a119f62f525d5dfe8a59598f40787b459b2d19c5f9b6f39e46",
-          "re_resolve": "0xd32a5dd222100b455a3738276e6f77477075d2fdb9d7c9a6423dca0c4a342ca2",
-          "refund": "0x9fd5d204e9ea0f54e90be1e46d0d6c13bd4ad1517f6111ede29c0c92a19b5ee2"
+          "create": "0x35ded495d670eb1abec505138685fa47bd1bef4e7ad4abaa7d53fe6d6c276ce1",
+          "submit_proof": "0x9ad3fb17c5e64f8f2a315cd7dff7ba53f4b62cb4d911284f11096d740ddb781d",
+          "resolve": "0xc6e761206bb41038ed78b7e95a82ef9abc6d9b04b76601519e979e83af99dfff",
+          "challenge": "0x8555a6b0185bd5eae86e6ec74eb57e92af24af4289024fe76ad458f4a1559d88",
+          "re_resolve": "0xb794116fe46372a9fda32dda820b9a01a0f6b4d4cf8446d44c459aa1fd8e8f37",
+          "refund": "0x7967ff5d61870281bb7aac41f1fb0c5577f8eac2c4a9d8dcd981672ddebbc504"
         },
         "initial_result": {
           "verdict": "REJECTED",
           "score": 0,
-          "confidence": 99
+          "confidence": 100
         },
         "final_result": {
           "verdict": "REJECTED",
@@ -108,9 +107,9 @@
         }
       },
       "receipt_attestor": {
-        "address": "0x0dC11B78D35Ee1503F51645db3F54926C2841A9b",
+        "address": "0x84c786b142230fC28e13D651c9C90130eA6fffC7",
         "transactions": {
-          "attest": "0xedec5b7ae368f852f7671c4ad91cc4e3db0c4426363f6987a8e31e5169e5d7ce"
+          "attest": "0x06b244888ff797b4bb427116228387250526da756a20a7c56dbaca11108de346"
         },
         "result": {
           "verdict": "MATCH"
@@ -118,18 +117,18 @@
         "evidence_hash": "ec36e728efb6fb0333f68d885f6eff93d6efdc157103d1afd33377b5be18fe77"
       },
       "damage_severity_oracle": {
-        "address": "0x8aAE6823845Dc193F5241752Ef017936e41947D6",
+        "address": "0xD19d6Aa533d2fEe78998cAf2feE93706c8a0c188",
         "transactions": {
-          "classify": "0xa7a81f723e281570d615d240e9aefc13956770f6e23796b2f5ff9fbf18d67e27"
+          "classify": "0x5fae63bd3648ba8b501f65d6db493d5515180af37b1c20981b7090bb0c2722a5"
         },
         "result": {
           "severity": "SEVERE"
         }
       },
       "before_after_verifier": {
-        "address": "0x19732C37d5Eef59AAD7F90eD73C5572b2868B8B6",
+        "address": "0x0bB5ec5dE0Fd9e3FA7Cd6B022636920658a69929",
         "transactions": {
-          "verify": "0xb79f244aa1f05b9b9d5f13be15ba7d68029f777852e56103aa918d20a751fb01"
+          "verify": "0x3152b12b75355304c61434f9026dfb5e37e8e49f5bdb94381408e0d5514cc3f0"
         },
         "result": {
           "verdict": "SUPPORTED"
@@ -138,19 +137,19 @@
         "after_hash": "ce03e1bad0e9686373e78f7de038524b9aa2a7d4a67b89849e7976dd870af4d5"
       },
       "chart_claim_verifier": {
-        "address": "0x039EBb19838A22598Efe38074e099C3Ff12D5223",
+        "address": "0xc8D0D042295073e0870758732a896B9F68C4C7f3",
         "transactions": {
-          "verify": "0x2434818861253e1bfe772c20463a69a4eec54902dd5c1963775d70a12ff1b8a5"
+          "verify": "0x3be807660da7de0b939b68fcc19076d65609203b7eae50e84fc860d559fb9ad6"
         },
         "result": {
           "verdict": "SUPPORTED",
-          "extracted_fact": "The chart explicitly shows September = 120."
+          "extracted_fact": "The chart explicitly labels September = 120 both at the top of the bar and in the axis label."
         }
       },
       "ui_state_attestor": {
-        "address": "0xa59C8e92519610A8205b4B79029A3cb557239fe5",
+        "address": "0x163382b8DECEAD4Ec421989353b6de12ED6176e6",
         "transactions": {
-          "attest": "0xa8d972533c28d2eeeda7e6660788cb61361b7f1dde9338061f800cc05e28f6cc"
+          "attest": "0x48c7a10c83942093f1942a4a691e2f7d6b4e3add6f4971dcefd860380406600d"
         },
         "result": {
           "verdict": "PRESENT",
@@ -158,9 +157,9 @@
         }
       },
       "document_field_attestor": {
-        "address": "0x349EE0145938976B4802A6EBbcB0B5579A69751d",
+        "address": "0x46AcF0eD060D15cb0d5AaC3A18a41f0f8d8A9496",
         "transactions": {
-          "attest": "0x96ecfacb75fc085f343f2973da334a8df45e66cfe4c078838e654531a0884684"
+          "attest": "0x95749ed0aeaa49a13c19f10278bd0188fca5b7dfe72ea050e23606eeba1acc76"
         },
         "result": {
           "verdict": "MATCH",
@@ -168,18 +167,18 @@
         }
       },
       "visual_decision_receipt": {
-        "address": "0xC5Bc5E92615917b75bCD9903db34b8c27D5Ff53F",
+        "address": "0xB366894f5962f10697b4cCe38d5c804C2B6023ED",
         "transactions": {
-          "decide": "0xa133eb8f28354c77db60b064bef002f70679b5637a1115a9540c245afcb2b4cf"
+          "decide": "0x80cd41bb82b847985892b02c6ddcb0c957f0319e8f775e41d805a8cd4cd9220f"
         },
         "result": {
           "decision": "YES"
         }
       },
       "visual_quorum": {
-        "address": "0xe8683b154032230B7A1Da2779B6ba0C2ec7A22Be",
+        "address": "0x0788a575fb2B97FC6C9844Bcac10b65e14919907",
         "transactions": {
-          "verify": "0xb772086aa6bf6d896d2bd189289669a8e14eaac38993814883fd3f62c0fe5da3"
+          "verify": "0x4f57dbb5a7025e6758c2a8961b4f012418b4af54320302a6e0b39ab69f828596"
         },
         "result": {
           "verdict": "SUPPORTED",
@@ -192,10 +191,11 @@
   "guarantees_demonstrated": [
     "bounded vision outputs",
     "validator re-evaluation of decisive judgments",
+    "final thresholded outcomes compared inside validator consensus",
     "low-confidence fail-closed behavior",
     "exact SHA-256 binding for caller-supplied image evidence",
     "distinct-image quorum",
-    "adversarial validator disagreement rejection",
+    "adversarial validator disagreement rejection including threshold-crossing cases",
     "one-hour guaranteed challenge window",
     "fresh challenge re-review",
     "native GEN escrow settlement",

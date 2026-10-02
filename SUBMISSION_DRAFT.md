@@ -43,7 +43,7 @@ Key controls:
 
 - low confidence resolves to UNDETERMINED / ABSTAIN;
 - invalid labels are normalized;
-- deterministic score and confidence floors, with VisualMilestoneEscrow comparing the final thresholded settlement status inside validator consensus;
+- deterministic score and confidence floors, with thresholded final outcomes compared inside validator consensus across the affected primitives;
 - duplicate result IDs are blocked;
 - duplicate image evidence is blocked where quorum requires distinct observations;
 - caller-supplied raw images are bound to exact SHA-256 digests;
@@ -60,16 +60,16 @@ Key controls:
 
 ### Direct and lint
 
-- 58 direct tests: PASS
+- 67 direct tests: PASS
 - 12 / 12 GenVM contract lints: PASS
-- Canonical CI run: https://github.com/maho0638/sightline-genlayer/actions/runs/36456868314
+- Canonical CI run: https://github.com/maho0638/sightline-genlayer/actions/runs/37062146230
 
-The direct suite covers happy paths, fail-closed paths, duplicate-ID invariants, exact SHA-256 evidence binding, challenge-window rules, distinct-evidence rules, and adversarial validator disagreement.
+The direct suite covers happy paths, fail-closed paths, duplicate-ID invariants, exact SHA-256 evidence binding, challenge-window rules, distinct-evidence rules, adversarial validator disagreement, and score/confidence threshold-crossing regressions.
 
 ### Canonical Studionet proof
 
-- Canonical run: https://github.com/maho0638/sightline-genlayer/actions/runs/36456231411
-- Live code commit: `c5c89b43d27be0fd5393a4a099e09608d05d04fb`
+- Canonical run: https://github.com/maho0638/sightline-genlayer/actions/runs/37062146333
+- Live code commit: `160992edf63803a49e14e6642f94329aa4e9e016`
 - Core lifecycle suite: 4 / 4 PASS
 - Expanded catalog suite: 8 / 8 PASS
 - Total: 12 / 12 primitives deployed and exercised on Studionet

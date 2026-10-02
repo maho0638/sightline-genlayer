@@ -31,7 +31,7 @@ Traditional smart contracts cannot inspect a receipt photo, compare before/after
 - decisive outputs are reduced to bounded fields;
 - validators independently re-run decisive vision judgments;
 - low-confidence or malformed results fail closed to `UNDETERMINED` / `ABSTAIN`;
-- validators compare the final thresholded settlement status inside consensus, so tolerated score/confidence drift cannot cross an economic decision boundary;
+- validators compare final thresholded outcomes inside consensus, so tolerated score/confidence drift cannot cross a stored or economic decision boundary;
 - duplicate result IDs are rejected;
 - VisualQuorum rejects duplicate evidence hashes and aggregates three independent classifications;
 - UI blocker state deterministically overrides visible success;
@@ -45,11 +45,11 @@ See `docs/THREAT_MODEL.md` for explicit limitations.
 
 Sightline is live-verified on Studionet:
 
-- 58 direct tests PASS;
+- 67 direct tests PASS;
 - 12 / 12 contracts pass GenVM lint;
-- canonical CI run: https://github.com/maho0638/sightline-genlayer/actions/runs/36456868314
-- canonical full Studionet run: https://github.com/maho0638/sightline-genlayer/actions/runs/36456231411
-- live commit: `c5c89b43d27be0fd5393a4a099e09608d05d04fb`
+- canonical CI run: https://github.com/maho0638/sightline-genlayer/actions/runs/37062146230
+- canonical full Studionet run: https://github.com/maho0638/sightline-genlayer/actions/runs/37062146333
+- live commit: `160992edf63803a49e14e6642f94329aa4e9e016`
 - core lifecycle: 4 / 4 PASS;
 - expanded catalog: 8 / 8 PASS;
 - total: 12 / 12 primitives deployed and exercised with live transactions and read/assertion checks.
