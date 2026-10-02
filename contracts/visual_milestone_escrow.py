@@ -71,6 +71,45 @@ class VisualMilestoneEscrow(gl.Contract):
         deadline = self._challenge_deadline(milestone)
         return deadline == 0 or self._now() > deadline
 
+    def _resolution_status(self, verdict: str, score: int, confidence: int) -> str:
+        """Derive the exact economic outcome guarded by consensus."""
+        verdict = str(verdict).upper()
+        score = max(0, min(100, int(score)))
+        confidence = max(0, min(100, int(confidence)))
+
+        if confidence < 65:
+            return "UNDETERMINED"
+        if verdict == "PASS" and score >= 70:
+            return "APPROVED"
+        if verdict == "FAIL":
+            return "REJECTED"
+        return "UNDETERMINED"
+
+    def _compatible_resolution(self, lead: dict, check: dict) -> bool:
+        """Accept numeric drift only when it preserves the final settlement status."""
+        lead_verdict = str(lead.get("verdict", "")).upper()
+        lead_score = int(lead.get("score", 0))
+        lead_confidence = int(lead.get("confidence", 0))
+        check_verdict = str(check.get("verdict", "")).upper()
+        check_score = int(check.get("score", 0))
+        check_confidence = int(check.get("confidence", 0))
+
+        return (
+            lead_verdict == check_verdict
+            and abs(lead_score - check_score) <= 10
+            and abs(lead_confidence - check_confidence) <= 15
+            and self._resolution_status(
+                lead_verdict,
+                lead_score,
+                lead_confidence,
+            )
+            == self._resolution_status(
+                check_verdict,
+                check_score,
+                check_confidence,
+            )
+        )
+
     def _judge(self, proof_url: str, rubric: str) -> dict:
         def leader_fn() -> dict:
             screenshot = gl.nondet.web.render(proof_url, mode="screenshot")
@@ -104,11 +143,7 @@ Return JSON only:
             try:
                 check = leader_fn()
                 lead = leader_result.calldata
-                return (
-                    str(lead.get("verdict", "")) == check["verdict"]
-                    and abs(int(lead.get("score", 0)) - check["score"]) <= 10
-                    and abs(int(lead.get("confidence", 0)) - check["confidence"]) <= 15
-                )
+                return self._compatible_resolution(lead, check)
             except Exception:
                 return False
 
@@ -119,15 +154,9 @@ Return JSON only:
         score = int(out["score"])
         confidence = int(out["confidence"])
 
-        if confidence < 65:
-            verdict = "UNDETERMINED"
-
-        if verdict == "PASS" and score >= 70:
-            milestone.status = "APPROVED"
-        elif verdict == "FAIL":
-            milestone.status = "REJECTED"
-        else:
-            milestone.status = "UNDETERMINED"
+        # Use the same deterministic function the validator checks so there is
+        # no gap between consensus acceptance and the later economic outcome.
+        milestone.status = self._resolution_status(verdict, score, confidence)
 
         milestone.proof_hash = str(out["proof_hash"])
         milestone.score = u256(score)

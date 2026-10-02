@@ -23,7 +23,7 @@ The direct suite covers:
 - duplicate-ID state invariants;
 - exact SHA-256 binding for caller-supplied visual evidence;
 - challenge-window and distinct-evidence rules;
-- adversarial validator disagreement, where the validator must reject a changed leader result.
+- adversarial validator disagreement, including escrow score/confidence pairs that remain within numeric tolerance but cross the final settlement threshold.
 
 ## Reproduce live Studionet proofs
 

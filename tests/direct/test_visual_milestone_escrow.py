@@ -70,3 +70,39 @@ def test_cannot_challenge_before_resolution(direct_vm, direct_deploy):
     direct_vm.value = 0
     with direct_vm.expect_revert("Milestone has no challengeable resolution"):
         c.challenge_resolution("m5", "The visual result should be re-checked.")
+
+
+def test_consensus_rejects_score_drift_that_crosses_approval_threshold(
+    direct_vm,
+    direct_deploy,
+):
+    c, _, _, _ = _deploy_with_accounts(direct_vm, direct_deploy)
+
+    assert c._compatible_resolution(
+        {"verdict": "PASS", "score": 72, "confidence": 80},
+        {"verdict": "PASS", "score": 68, "confidence": 80},
+    ) is False
+
+
+def test_consensus_rejects_confidence_drift_that_crosses_fail_closed_floor(
+    direct_vm,
+    direct_deploy,
+):
+    c, _, _, _ = _deploy_with_accounts(direct_vm, direct_deploy)
+
+    assert c._compatible_resolution(
+        {"verdict": "PASS", "score": 90, "confidence": 70},
+        {"verdict": "PASS", "score": 90, "confidence": 60},
+    ) is False
+
+
+def test_consensus_accepts_numeric_drift_when_settlement_outcome_is_unchanged(
+    direct_vm,
+    direct_deploy,
+):
+    c, _, _, _ = _deploy_with_accounts(direct_vm, direct_deploy)
+
+    assert c._compatible_resolution(
+        {"verdict": "PASS", "score": 78, "confidence": 82},
+        {"verdict": "PASS", "score": 75, "confidence": 79},
+    ) is True
