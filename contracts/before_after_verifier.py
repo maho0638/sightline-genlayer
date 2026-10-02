@@ -25,6 +25,15 @@ class BeforeAfterVerifier(gl.Contract):
     def __init__(self):
         pass
 
+    def _final_verdict(self, verdict: str, confidence: int) -> str:
+        verdict = str(verdict).upper()
+        if verdict not in ("SUPPORTED", "CONTRADICTED", "UNDETERMINED"):
+            verdict = "UNDETERMINED"
+        confidence = max(0, min(100, int(confidence)))
+        if confidence < 65:
+            return "UNDETERMINED"
+        return verdict
+
     def _judge(self, before_image: bytes, after_image: bytes, claim: str) -> dict:
         def leader_fn() -> dict:
             out = gl.nondet.exec_prompt(
@@ -54,10 +63,12 @@ UNDETERMINED means the two images cannot reliably establish the claimed change.
             try:
                 check = leader_fn()
                 lead = leader_result.calldata
+                lead_confidence = max(0, min(100, int(lead.get("confidence", 0))))
                 return (
-                    str(lead.get("verdict", "")) == check["verdict"]
+                    self._final_verdict(str(lead.get("verdict", "")), lead_confidence)
+                    == self._final_verdict(check["verdict"], check["confidence"])
                     and abs(int(lead.get("materiality", 0)) - check["materiality"]) <= 12
-                    and abs(int(lead.get("confidence", 0)) - check["confidence"]) <= 15
+                    and abs(lead_confidence - check["confidence"]) <= 15
                 )
             except Exception:
                 return False
@@ -87,10 +98,8 @@ UNDETERMINED means the two images cannot reliably establish the claimed change.
             raise gl.vm.UserError("Before and after images must differ")
 
         out = self._judge(before_image, after_image, claim)
-        verdict = str(out["verdict"])
         confidence = int(out["confidence"])
-        if confidence < 65:
-            verdict = "UNDETERMINED"
+        verdict = self._final_verdict(str(out["verdict"]), confidence)
 
         self.results[result_id] = ChangeResult(
             id=result_id,

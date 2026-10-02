@@ -24,6 +24,18 @@ class VisualRubricGate(gl.Contract):
     def __init__(self):
         pass
 
+    def _final_verdict(self, verdict: str, score: int, confidence: int) -> str:
+        verdict = str(verdict).upper()
+        if verdict not in ("PASS", "FAIL", "UNDETERMINED"):
+            verdict = "UNDETERMINED"
+        score = max(0, min(100, int(score)))
+        confidence = max(0, min(100, int(confidence)))
+        if confidence < 65:
+            return "UNDETERMINED"
+        if verdict == "PASS" and score < 70:
+            return "FAIL"
+        return verdict
+
     def _judge(self, image_data: bytes, rubric: str) -> dict:
         def leader_fn() -> dict:
             out = gl.nondet.exec_prompt(
@@ -54,10 +66,13 @@ Do not invent rubric items.
             try:
                 check = leader_fn()
                 lead = leader_result.calldata
+                lead_score = max(0, min(100, int(lead.get("score", 0))))
+                lead_confidence = max(0, min(100, int(lead.get("confidence", 0))))
                 return (
-                    str(lead.get("verdict", "")) == check["verdict"]
-                    and abs(int(lead.get("score", 0)) - check["score"]) <= 10
-                    and abs(int(lead.get("confidence", 0)) - check["confidence"]) <= 15
+                    self._final_verdict(str(lead.get("verdict", "")), lead_score, lead_confidence)
+                    == self._final_verdict(check["verdict"], check["score"], check["confidence"])
+                    and abs(lead_score - check["score"]) <= 10
+                    and abs(lead_confidence - check["confidence"]) <= 15
                 )
             except Exception:
                 return False
@@ -79,14 +94,9 @@ Do not invent rubric items.
 
         evidence_hash = hashlib.sha256(image_data).hexdigest()
         out = self._judge(image_data, rubric)
-        verdict = str(out["verdict"])
         score = int(out["score"])
         confidence = int(out["confidence"])
-
-        if confidence < 65:
-            verdict = "UNDETERMINED"
-        elif verdict == "PASS" and score < 70:
-            verdict = "FAIL"
+        verdict = self._final_verdict(str(out["verdict"]), score, confidence)
 
         self.results[result_id] = RubricResult(
             id=result_id,

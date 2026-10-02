@@ -35,6 +35,15 @@ class ChallengeableVisualClaim(gl.Contract):
     def __init__(self):
         pass
 
+    def _final_verdict(self, verdict: str, confidence: int) -> str:
+        verdict = str(verdict).upper()
+        if verdict not in ("SUPPORTED", "CONTRADICTED", "UNDETERMINED"):
+            verdict = "UNDETERMINED"
+        confidence = max(0, min(100, int(confidence)))
+        if confidence < 65:
+            return "UNDETERMINED"
+        return verdict
+
     def _now(self) -> int:
         return int(datetime.now(timezone.utc).timestamp())
 
@@ -64,9 +73,11 @@ Use only what is visible.
             try:
                 check = leader_fn()
                 lead = leader_result.calldata
+                lead_confidence = max(0, min(100, int(lead.get("confidence", 0))))
                 return (
-                    str(lead.get("verdict", "")) == check["verdict"]
-                    and abs(int(lead.get("confidence", 0)) - check["confidence"]) <= 15
+                    self._final_verdict(str(lead.get("verdict", "")), lead_confidence)
+                    == self._final_verdict(check["verdict"], check["confidence"])
+                    and abs(lead_confidence - check["confidence"]) <= 15
                 )
             except Exception:
                 return False
@@ -86,10 +97,8 @@ Use only what is visible.
 
         evidence_hash = hashlib.sha256(image_data).hexdigest()
         out = self._judge(image_data, claim)
-        verdict = str(out["verdict"])
         confidence = int(out["confidence"])
-        if confidence < 65:
-            verdict = "UNDETERMINED"
+        verdict = self._final_verdict(str(out["verdict"]), confidence)
 
         now = self._now()
         self.claims[claim_id] = VisualClaim(
@@ -128,10 +137,8 @@ Use only what is visible.
             raise gl.vm.UserError("Challenge must provide different evidence")
 
         out = self._judge(image_data, record.claim)
-        verdict = str(out["verdict"])
         confidence = int(out["confidence"])
-        if confidence < 65:
-            verdict = "UNDETERMINED"
+        verdict = self._final_verdict(str(out["verdict"]), confidence)
 
         record.challenged = True
         record.challenger = str(gl.message.sender_address)

@@ -20,6 +20,15 @@ class DamageSeverityOracle(gl.Contract):
     def __init__(self):
         pass
 
+    def _final_severity(self, severity: str, confidence: int) -> str:
+        severity = str(severity).upper()
+        if severity not in ("NONE", "MINOR", "MODERATE", "SEVERE", "UNDETERMINED"):
+            severity = "UNDETERMINED"
+        confidence = max(0, min(100, int(confidence)))
+        if confidence < 60:
+            return "UNDETERMINED"
+        return severity
+
     def _judge(self, image_data: bytes, subject: str) -> dict:
         def leader_fn() -> dict:
             out = gl.nondet.exec_prompt(
@@ -47,7 +56,12 @@ Use UNDETERMINED if the image is unclear or insufficient.
                 return False
             try:
                 check = leader_fn(); lead = leader_result.calldata
-                return str(lead.get("severity", "")) == check["severity"] and abs(int(lead.get("confidence", 0)) - check["confidence"]) <= 15
+                lead_confidence = max(0, min(100, int(lead.get("confidence", 0))))
+                return (
+                    self._final_severity(str(lead.get("severity", "")), lead_confidence)
+                    == self._final_severity(check["severity"], check["confidence"])
+                    and abs(lead_confidence - check["confidence"]) <= 15
+                )
             except Exception:
                 return False
         return gl.vm.run_nondet_unsafe(leader_fn, validator_fn)
@@ -63,9 +77,8 @@ Use UNDETERMINED if the image is unclear or insufficient.
             raise gl.vm.UserError("Image data is empty")
         evidence_hash = hashlib.sha256(image_data).hexdigest()
         out = self._judge(image_data, subject)
-        severity = str(out["severity"]); confidence = int(out["confidence"])
-        if confidence < 60:
-            severity = "UNDETERMINED"
+        confidence = int(out["confidence"])
+        severity = self._final_severity(str(out["severity"]), confidence)
         self.results[result_id] = DamageResult(
             id=result_id,
             evidence_ref=evidence_ref.strip()[:240],

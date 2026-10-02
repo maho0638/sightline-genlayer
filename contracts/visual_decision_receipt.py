@@ -22,6 +22,15 @@ class VisualDecisionReceipt(gl.Contract):
     def __init__(self):
         pass
 
+    def _final_decision(self, decision: str, confidence: int) -> str:
+        decision = str(decision).upper()
+        if decision not in ("YES", "NO", "ABSTAIN"):
+            decision = "ABSTAIN"
+        confidence = max(0, min(100, int(confidence)))
+        if confidence < 65:
+            return "ABSTAIN"
+        return decision
+
     def _judge(self, image_data: bytes, question: str) -> dict:
         def leader_fn() -> dict:
             out = gl.nondet.exec_prompt(
@@ -50,9 +59,11 @@ Use ABSTAIN if the image does not clearly establish YES or NO.
             try:
                 check = leader_fn()
                 lead = leader_result.calldata
+                lead_confidence = max(0, min(100, int(lead.get("confidence", 0))))
                 return (
-                    str(lead.get("decision", "")) == check["decision"]
-                    and abs(int(lead.get("confidence", 0)) - check["confidence"]) <= 15
+                    self._final_decision(str(lead.get("decision", "")), lead_confidence)
+                    == self._final_decision(check["decision"], check["confidence"])
+                    and abs(lead_confidence - check["confidence"]) <= 15
                 )
             except Exception:
                 return False
@@ -78,10 +89,8 @@ Use ABSTAIN if the image does not clearly establish YES or NO.
             raise gl.vm.UserError("Image data is empty")
         evidence_hash = hashlib.sha256(image_data).hexdigest()
         out = self._judge(image_data, question)
-        decision = str(out["decision"])
         confidence = int(out["confidence"])
-        if confidence < 65:
-            decision = "ABSTAIN"
+        decision = self._final_decision(str(out["decision"]), confidence)
         self.receipts[receipt_id] = DecisionReceipt(
             id=receipt_id,
             question=question[:1200],

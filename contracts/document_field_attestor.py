@@ -22,6 +22,15 @@ class DocumentFieldAttestor(gl.Contract):
     def __init__(self):
         pass
 
+    def _final_verdict(self, verdict: str, confidence: int) -> str:
+        verdict = str(verdict).upper()
+        if verdict not in ("MATCH", "MISMATCH", "UNDETERMINED"):
+            verdict = "UNDETERMINED"
+        confidence = max(0, min(100, int(confidence)))
+        if confidence < 65:
+            return "UNDETERMINED"
+        return verdict
+
     def _judge(self, image_data: bytes, field_name: str, expected_value: str) -> dict:
         def leader_fn() -> dict:
             out = gl.nondet.exec_prompt(
@@ -52,10 +61,11 @@ Use UNDETERMINED if the field is unreadable or ambiguous.
             try:
                 check = leader_fn()
                 lead = leader_result.calldata
+                lead_confidence = max(0, min(100, int(lead.get("confidence", 0))))
                 return (
-                    str(lead.get("verdict", "")) == check["verdict"]
-                    and str(lead.get("observed_value", "")) == check["observed_value"]
-                    and abs(int(lead.get("confidence", 0)) - check["confidence"]) <= 12
+                    self._final_verdict(str(lead.get("verdict", "")), lead_confidence)
+                    == self._final_verdict(check["verdict"], check["confidence"])
+                    and abs(lead_confidence - check["confidence"]) <= 12
                 )
             except Exception:
                 return False
@@ -81,10 +91,8 @@ Use UNDETERMINED if the field is unreadable or ambiguous.
             raise gl.vm.UserError("Image data is empty")
         evidence_hash = hashlib.sha256(image_data).hexdigest()
         out = self._judge(image_data, field_name, expected_value)
-        verdict = str(out["verdict"])
         confidence = int(out["confidence"])
-        if confidence < 65:
-            verdict = "UNDETERMINED"
+        verdict = self._final_verdict(str(out["verdict"]), confidence)
         self.results[result_id] = FieldResult(
             id=result_id,
             field_name=field_name[:180],

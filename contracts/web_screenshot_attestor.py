@@ -21,6 +21,15 @@ class WebScreenshotAttestor(gl.Contract):
     def __init__(self):
         pass
 
+    def _final_verdict(self, verdict: str, confidence: int) -> str:
+        verdict = str(verdict).upper()
+        if verdict not in ("PASS", "FAIL", "UNDETERMINED"):
+            verdict = "UNDETERMINED"
+        confidence = max(0, min(100, int(confidence)))
+        if confidence < 65:
+            return "UNDETERMINED"
+        return verdict
+
     def _judge(self, url: str, criterion: str) -> dict:
         def leader_fn() -> dict:
             screenshot = gl.nondet.web.render(url, mode="screenshot")
@@ -51,9 +60,11 @@ Return JSON only:
                 return False
             try:
                 check = leader_fn(); lead = leader_result.calldata
+                lead_confidence = max(0, min(100, int(lead.get("confidence", 0))))
                 return (
-                    str(lead.get("verdict", "")) == check["verdict"]
-                    and abs(int(lead.get("confidence", 0)) - check["confidence"]) <= 15
+                    self._final_verdict(str(lead.get("verdict", "")), lead_confidence)
+                    == self._final_verdict(check["verdict"], check["confidence"])
+                    and abs(lead_confidence - check["confidence"]) <= 15
                 )
             except Exception:
                 return False
@@ -70,9 +81,8 @@ Return JSON only:
         if result_id in self.results:
             raise gl.vm.UserError("Result already exists")
         out = self._judge(url, criterion)
-        verdict = str(out["verdict"]); confidence = int(out["confidence"])
-        if confidence < 65:
-            verdict = "UNDETERMINED"
+        confidence = int(out["confidence"])
+        verdict = self._final_verdict(str(out["verdict"]), confidence)
         self.results[result_id] = ScreenshotResult(
             id=result_id,
             url=url[:500],

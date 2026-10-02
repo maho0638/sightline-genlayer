@@ -25,6 +25,15 @@ class ReceiptAttestor(gl.Contract):
     def __init__(self):
         pass
 
+    def _final_verdict(self, verdict: str, confidence: int) -> str:
+        verdict = str(verdict).upper()
+        if verdict not in ("MATCH", "MISMATCH", "UNDETERMINED"):
+            verdict = "UNDETERMINED"
+        confidence = max(0, min(100, int(confidence)))
+        if confidence < 65:
+            return "UNDETERMINED"
+        return verdict
+
     def _judge(
         self,
         image_data: bytes,
@@ -63,10 +72,11 @@ Use UNDETERMINED if the image is unreadable or the decisive fields cannot be est
             try:
                 check = leader_fn()
                 lead = leader_result.calldata
+                lead_confidence = max(0, min(100, int(lead.get("confidence", 0))))
                 return (
-                    str(lead.get("verdict", "")) == check["verdict"]
-                    and str(lead.get("actual_amount", "")) == check["actual_amount"]
-                    and abs(int(lead.get("confidence", 0)) - check["confidence"]) <= 12
+                    self._final_verdict(str(lead.get("verdict", "")), lead_confidence)
+                    == self._final_verdict(check["verdict"], check["confidence"])
+                    and abs(lead_confidence - check["confidence"]) <= 12
                 )
             except Exception:
                 return False
@@ -101,10 +111,8 @@ Use UNDETERMINED if the image is unreadable or the decisive fields cannot be est
             expected_amount.strip(),
             expected_date.strip(),
         )
-        verdict = str(out["verdict"])
         confidence = int(out["confidence"])
-        if confidence < 65:
-            verdict = "UNDETERMINED"
+        verdict = self._final_verdict(str(out["verdict"]), confidence)
 
         self.results[result_id] = ReceiptResult(
             id=result_id,

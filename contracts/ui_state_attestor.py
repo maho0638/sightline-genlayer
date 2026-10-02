@@ -23,6 +23,16 @@ class UIStateAttestor(gl.Contract):
     def __init__(self):
         pass
 
+    def _final_verdict(self, visible: bool, blocked: bool, confidence: int) -> str:
+        confidence = max(0, min(100, int(confidence)))
+        if confidence < 65:
+            return "UNDETERMINED"
+        if bool(blocked):
+            return "BLOCKED"
+        if bool(visible):
+            return "PRESENT"
+        return "ABSENT"
+
     def _judge(self, image_data: bytes, target_state: str) -> dict:
         def leader_fn() -> dict:
             out = gl.nondet.exec_prompt(
@@ -50,10 +60,15 @@ blocked=true when an error, modal, loading state, access gate, or contradictory 
             try:
                 check = leader_fn()
                 lead = leader_result.calldata
+                lead_visible = bool(lead.get("visible", False))
+                lead_blocked = bool(lead.get("blocked", False))
+                lead_confidence = max(0, min(100, int(lead.get("confidence", 0))))
                 return (
-                    bool(lead.get("visible", False)) == check["visible"]
-                    and bool(lead.get("blocked", False)) == check["blocked"]
-                    and abs(int(lead.get("confidence", 0)) - check["confidence"]) <= 15
+                    lead_visible == check["visible"]
+                    and lead_blocked == check["blocked"]
+                    and self._final_verdict(lead_visible, lead_blocked, lead_confidence)
+                    == self._final_verdict(check["visible"], check["blocked"], check["confidence"])
+                    and abs(lead_confidence - check["confidence"]) <= 15
                 )
             except Exception:
                 return False
@@ -73,14 +88,7 @@ blocked=true when an error, modal, loading state, access gate, or contradictory 
         evidence_hash = hashlib.sha256(image_data).hexdigest()
         out = self._judge(image_data, target_state)
         confidence = int(out["confidence"])
-        if confidence < 65:
-            verdict = "UNDETERMINED"
-        elif bool(out["blocked"]):
-            verdict = "BLOCKED"
-        elif bool(out["visible"]):
-            verdict = "PRESENT"
-        else:
-            verdict = "ABSENT"
+        verdict = self._final_verdict(bool(out["visible"]), bool(out["blocked"]), confidence)
         self.results[result_id] = UIStateResult(
             id=result_id,
             target_state=target_state[:1000],
