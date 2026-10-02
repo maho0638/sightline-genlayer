@@ -6,6 +6,7 @@ import pytest
 from PIL import Image, ImageDraw, ImageFont
 from gltest import get_contract_factory
 from gltest.assertions import tx_execution_succeeded
+from gltest.types import TransactionStatus
 
 
 def _field(value, name):
@@ -209,7 +210,12 @@ def test_chart_claim_live(default_account):
     print(f"SIGHTLINE_CHART_CONTRACT={contract.address}", flush=True)
     tx = contract.verify(args=[
         "chart-live-v1", "The September value shown is 120.", _chart_png()
-    ]).transact(consensus_max_rotations=4, wait_interval=10000, wait_retries=60)
+    ]).transact(
+        consensus_max_rotations=4,
+        wait_transaction_status=TransactionStatus.FINALIZED,
+        wait_interval=10000,
+        wait_retries=60,
+    )
     assert tx_execution_succeeded(tx)
     print(f"SIGHTLINE_CHART_TX={tx.get('hash', '')}", flush=True)
     r = contract.get_result(args=["chart-live-v1"]).call()
