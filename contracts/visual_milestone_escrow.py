@@ -85,6 +85,31 @@ class VisualMilestoneEscrow(gl.Contract):
             return "REJECTED"
         return "UNDETERMINED"
 
+    def _compatible_resolution(self, lead: dict, check: dict) -> bool:
+        """Accept numeric drift only when it preserves the final settlement status."""
+        lead_verdict = str(lead.get("verdict", "")).upper()
+        lead_score = int(lead.get("score", 0))
+        lead_confidence = int(lead.get("confidence", 0))
+        check_verdict = str(check.get("verdict", "")).upper()
+        check_score = int(check.get("score", 0))
+        check_confidence = int(check.get("confidence", 0))
+
+        return (
+            lead_verdict == check_verdict
+            and abs(lead_score - check_score) <= 10
+            and abs(lead_confidence - check_confidence) <= 15
+            and self._resolution_status(
+                lead_verdict,
+                lead_score,
+                lead_confidence,
+            )
+            == self._resolution_status(
+                check_verdict,
+                check_score,
+                check_confidence,
+            )
+        )
+
     def _judge(self, proof_url: str, rubric: str) -> dict:
         def leader_fn() -> dict:
             screenshot = gl.nondet.web.render(proof_url, mode="screenshot")
@@ -118,31 +143,7 @@ Return JSON only:
             try:
                 check = leader_fn()
                 lead = leader_result.calldata
-
-                lead_verdict = str(lead.get("verdict", "")).upper()
-                lead_score = int(lead.get("score", 0))
-                lead_confidence = int(lead.get("confidence", 0))
-                check_verdict = str(check["verdict"]).upper()
-                check_score = int(check["score"])
-                check_confidence = int(check["confidence"])
-
-                # Numeric tolerance is acceptable only when both validators
-                # still derive the exact same settlement-gating outcome.
-                return (
-                    lead_verdict == check_verdict
-                    and abs(lead_score - check_score) <= 10
-                    and abs(lead_confidence - check_confidence) <= 15
-                    and self._resolution_status(
-                        lead_verdict,
-                        lead_score,
-                        lead_confidence,
-                    )
-                    == self._resolution_status(
-                        check_verdict,
-                        check_score,
-                        check_confidence,
-                    )
-                )
+                return self._compatible_resolution(lead, check)
             except Exception:
                 return False
 
